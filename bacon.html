@@ -1,0 +1,35 @@
+<html>
+  <head>
+
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans&v1'
+    rel='stylesheet' type='text/css'>
+    <style type="text/css">
+      h1 {
+        font-family: 'Open Sans', arial, serif;
+        margin-top:-40px;
+        margin-bottom:-80px;
+        font-size: 1000%;
+      }
+      body {
+        background-color: #CCCCCC;
+      }
+    </style>
+
+    <script type="text/javascript"
+      src="http://code.jquery.com/jquery-1.6.1.min.js">
+    </script>
+
+    <script type="text/javascript">
+      $(document).ready(function(){
+        setInterval(
+          function() {
+            $("#belly").prepend("<h1>BaconStrips&</h1>");
+          }, 750);
+        });
+      </script>
+
+  </head>
+  <body>
+    <div id="belly"></div>
+  </body>
+</html>

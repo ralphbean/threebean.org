@@ -1,0 +1,77 @@
+<html><body>
+<pre style='color:#000000;background:#ffffff;'><span style='color:#696969; '>#!/bin/bash</span>
+<span style='color:#696969; '># The following bash script demonstrates how updates to submodules do not</span>
+<span style='color:#696969; '># propagate between clones of 'super-repositories' (repositories which</span>
+<span style='color:#696969; '># themselves have submodules).</span>
+<span style='color:#696969; '>#</span>
+<span style='color:#696969; '># This script was created to show the necessity of a server-side git hook to</span>
+<span style='color:#696969; '># perform a 'git submodule update --init' in RedHat's OpenShift Express.</span>
+<span style='color:#696969; '>#</span>
+<span style='color:#696969; '># Copies of this script can be found here:</span>
+<span style='color:#696969; '>#   HTML:  </span><span style='color:#5555dd; '>http://threebean.org/submodule-tests.html</span>
+<span style='color:#696969; '>#    raw:  </span><span style='color:#5555dd; '>http://threebean.org/submodule-tests.sh</span>
+<span style='color:#696969; '>#</span>
+<span style='color:#696969; '># Author:  Ralph Bean </span><span style='color:#0000e6; '>&lt;</span><span style='color:#7144c4; '>ralph.bean@gmail.com</span><span style='color:#0000e6; '>></span>
+
+homebase<span style='color:#808030; '>=</span>$<span style='color:#800080; '>(</span><span style='color:#bb7977; font-weight:bold; '>pwd</span><span style='color:#800080; '>)</span>
+
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"* Trying to remove old repos from previous runs."</span>
+rm -rf repo1 repo2 cloned
+
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"* Making new test repos with some junk data."</span>
+mkdir repo1 repo2
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"hai"</span> <span style='color:#e34adc; '>></span><span style='color:#e34adc; '>></span> <span style='color:#40015a; '>repo1/foo</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"bai"</span> <span style='color:#e34adc; '>></span><span style='color:#e34adc; '>></span> <span style='color:#40015a; '>repo2/bar</span>
+<span style='color:#bb7977; font-weight:bold; '>pushd</span> repo1 <span style='color:#800080; '>&amp;&amp;</span> git init <span style='color:#800080; '>&amp;&amp;</span> git add foo <span style='color:#800080; '>&amp;&amp;</span> git commit -m <span style='color:#0000e6; '>'Initial commit.'</span> <span style='color:#800080; '>&amp;&amp;</span> <span style='color:#bb7977; font-weight:bold; '>popd</span>
+<span style='color:#bb7977; font-weight:bold; '>pushd</span> repo2 <span style='color:#800080; '>&amp;&amp;</span> git init <span style='color:#800080; '>&amp;&amp;</span> git add bar <span style='color:#800080; '>&amp;&amp;</span> git commit -m <span style='color:#0000e6; '>'Initial commit.'</span> <span style='color:#800080; '>&amp;&amp;</span> <span style='color:#bb7977; font-weight:bold; '>popd</span>
+
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"* Adding repo2 as a submodule of repo1"</span>
+<span style='color:#bb7977; font-weight:bold; '>pushd</span> repo1 <span style='color:#800080; '>&amp;&amp;</span> git submodule add $homebase<span style='color:#40015a; '>/repo2</span> <span style='color:#800080; '>&amp;&amp;</span> git commit -m <span style='color:#0000e6; '>'Added repo2 as a submodule'</span> <span style='color:#800080; '>&amp;&amp;</span> <span style='color:#bb7977; font-weight:bold; '>popd</span>
+
+<span style='color:#696969; '>## Even if you try to do perform a submodule update on your original repository,</span>
+<span style='color:#696969; '>## the following demonstration plays out the same.  These lines are not</span>
+<span style='color:#696969; '>## necessary, and have no effect.</span>
+<span style='color:#696969; '>#pushd repo1</span>
+<span style='color:#696969; '>#git submodule update            # Let's try this</span>
+<span style='color:#696969; '>#git submodule update --init     # This too, just for kicks</span>
+<span style='color:#696969; '>#popd</span>
+
+<span style='color:#bb7977; font-weight:bold; '>echo</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"-----------------------------------------------------------------"</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"* Here, we expect </span><span style='color:#40015a; '>repo1/repo2/bar</span><span style='color:#0000e6; '> to exist and contain 'bai':"</span>
+ls -al <span style='color:#40015a; '>repo1/repo2</span>
+cat <span style='color:#40015a; '>repo1/repo2/bar</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"* And it does..."</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"-----------------------------------------------------------------"</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span>
+
+<span style='color:#696969; '># Now we'll clone repo1</span>
+git clone $homebase<span style='color:#40015a; '>/repo1</span> cloned
+
+<span style='color:#bb7977; font-weight:bold; '>echo</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"------------------------------------------------------------------"</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"* We might expect </span><span style='color:#40015a; '>cloned/repo2/bar</span><span style='color:#0000e6; '> to exist and contain 'bai':"</span>
+ls -al <span style='color:#40015a; '>cloned/repo2</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"* But it does not..."</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"------------------------------------------------------------------"</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span>
+
+<span style='color:#696969; '># Until we explicitly do a submodule update</span>
+<span style='color:#bb7977; font-weight:bold; '>pushd</span> cloned <span style='color:#800080; '>&amp;&amp;</span> git submodule update --init <span style='color:#800080; '>&amp;&amp;</span> <span style='color:#bb7977; font-weight:bold; '>popd</span>
+
+<span style='color:#bb7977; font-weight:bold; '>echo</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"------------------------------------------------------------------"</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"* Now we can rest easy..."</span>
+ls -al <span style='color:#40015a; '>cloned/repo2</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span> <span style='color:#0000e6; '>"------------------------------------------------------------------"</span>
+<span style='color:#bb7977; font-weight:bold; '>echo</span>
+
+<span style='color:#696969; '># A concern might be, for openshift, that if you perform a</span>
+<span style='color:#696969; '>#   git submodule update --init</span>
+<span style='color:#696969; '># on each push, it might break other users that aren't using submodules, or be</span>
+<span style='color:#696969; '># cumbersome, or slow...  Here if we do a submodule update on a repo that has</span>
+<span style='color:#696969; '># no submodules (repo2 itself), we receive no error messages and it terminates</span>
+<span style='color:#696969; '># rather quickly.</span>
+
+<span style='color:#bb7977; font-weight:bold; '>pushd</span> repo2 <span style='color:#800080; '>&amp;&amp;</span> git submodule update --init <span style='color:#800080; '>&amp;&amp;</span> <span style='color:#bb7977; font-weight:bold; '>popd</span>  <span style='color:#696969; '># (nothing happened)</span>
+</pre></body></html>
