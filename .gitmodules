@@ -1,0 +1,3 @@
+[submodule "konami"]
+	path = konami
+	url = git://github.com/ralphbean/konami-code-tutorial.git
