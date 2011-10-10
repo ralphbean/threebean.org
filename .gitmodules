@@ -1,3 +1,6 @@
 [submodule "konami"]
 	path = konami
 	url = git://github.com/ralphbean/konami-code-tutorial.git
+[submodule "js-experiments"]
+	path = js-experiments
+	url = git://github.com/ralphbean/js-experiments.git
